@@ -1,0 +1,11 @@
+filter:
+  paths: [classes/*]
+
+tools:
+  php_code_sniffer: false
+  php_cs_fixer: false
+  external_code_coverage: true
+  php_cpd: true
+  php_hhvm: true
+  php_analyzer: true
+  php_pdepend: true
