@@ -9,7 +9,7 @@
  */
 class IntegrationTest extends Testcase
 {
-    public function test_deep()
+    public function test_shallow()
     {
         $nine = Jam::create('category', array('name' => 'nine'));
         $four = Jam::find('category', 4);
@@ -32,6 +32,56 @@ class IntegrationTest extends Testcase
         $this->assertTrue($seven->is_decendent_of($four));
         $this->assertTrue($nine->children->has($seven));
         $nine->delete();
-        $this->assertEquals(array(2, 3, 4, 5, 6, 7), $one->decendents()->ids());
+        $this->assertEquals(array(2, 3, 4, 5, 6, 8), $one->decendents()->ids());
+    }
+
+    public function test_add_child()
+    {
+        $two = Jam::find('category', 2);
+        $seven = Jam::find('category', 7);
+
+        $seven->children->add($two);
+
+        $seven->save();
+
+        $result = Jam::all('category')->as_array('id', 'path');
+
+        $expected = array(
+            1 => NULL,
+            2 => '1/3/6/7',
+            3 => '1',
+            4 => '1/3/6/7/2',
+            5 => '1/3/6/7/2',
+            6 => '1/3',
+            7 => '1/3/6',
+            8 => '1/3/6',
+        );
+
+        $this->assertEquals($expected, $result);
+    }
+
+    public function test_remove_child()
+    {
+        $one = Jam::find('category', 1);
+        $three = Jam::find('category', 3);
+
+        $one->children->remove($three);
+
+        $one->save();
+
+        $result = Jam::all('category')->as_array('id', 'path');
+
+        $expected = array(
+            1 => NULL,
+            2 => '1',
+            3 => NULL,
+            4 => '1/2',
+            5 => '1/2',
+            6 => '3',
+            7 => '3/6',
+            8 => '3/6',
+        );
+
+        $this->assertEquals($expected, $result);
     }
 }

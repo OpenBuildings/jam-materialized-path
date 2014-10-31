@@ -36,7 +36,7 @@ class Kohana_Jam_Association_Materializedpath_Belongsto extends Kohana_Jam_Assoc
                                 ':new_path' => $item->children_path(),
                             )
                         )
-                    );
+                    )->execute();
             }
         }
     }

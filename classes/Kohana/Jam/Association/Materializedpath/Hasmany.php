@@ -18,31 +18,10 @@ class Kohana_Jam_Association_Materializedpath_Hasmany extends Kohana_Jam_Associa
         $query = parent::remove_items_query($model, $ids);
 
         if ($query instanceof Jam_Query_Builder_Update) {
-            $query
-                ->value('path', $model->children_path());
+            $query->value('path', NULL);
         }
 
         return $query;
-    }
-
-    /**
-     * Set the foreign and polymorphic keys on an item when its set to the associated collection
-     *
-     * @param  Jam_Model $model
-     * @param  Jam_Model $item
-     */
-    public function item_set(Jam_Model $model, Jam_Model $item)
-    {
-        parent::item_set($model, $item);
-
-        $item->path = $model->children_path();
-    }
-
-    public function item_unset(Jam_Model $model, Jam_Model $item)
-    {
-        parent::item_unset($model, $item);
-
-        $item->path = '';
     }
 
     public function save(Jam_Model $model, Jam_Array_Association $collection)
@@ -51,19 +30,25 @@ class Kohana_Jam_Association_Materializedpath_Hasmany extends Kohana_Jam_Associa
 
         foreach ($collection->original() as $item)
         {
+            $item = Jam::build($model)->load_fields($item);
+
             if ( ! $collection->has($item)) {
-                Jam::update($model->meta()->name())
-                    ->where('path', 'LIKE', $item->original('path').'%')
-                    ->set(
+                $old_path = $item->children_path();
+                $item->path = '';
+                $new_path = $item->children_path();
+
+                Jam::update($model)
+                    ->where('path', 'LIKE', $old_path.'%')
+                    ->value(
                         'path',
                         DB::expr(
                             'TRIM(BOTH "/" FROM REPLACE(path, :old_path, :new_path))',
                             array(
-                                ':old_path' => $model->original('path'),
-                                ':new_path' => '',
+                                ':old_path' => $old_path,
+                                ':new_path' => $new_path,
                             )
                         )
-                    );
+                    )->execute();
             }
         }
 
@@ -71,18 +56,22 @@ class Kohana_Jam_Association_Materializedpath_Hasmany extends Kohana_Jam_Associa
         {
             if (FALSE === in_array($item->id(), $collection->original_ids()))
             {
+                $old_path = $item->children_path();
+                $item->path = $model->children_path();
+                $new_path = $item->children_path();
+
                 Jam::update($model)
-                    ->where('path', 'LIKE', $item->original('path').'%')
+                    ->where('path', 'LIKE', $old_path.'%')
                     ->value(
                         'path',
                         DB::expr(
                             'TRIM(BOTH "/" FROM REPLACE(path, :old_path, :new_path))',
                             array(
-                                ':old_path' => $item->original('path'),
-                                ':new_path' => $item->path,
+                                ':old_path' => $old_path,
+                                ':new_path' => $new_path,
                             )
                         )
-                    );
+                    )->execute();
             }
         }
     }
@@ -94,7 +83,7 @@ class Kohana_Jam_Association_Materializedpath_Hasmany extends Kohana_Jam_Associa
     public function model_after_delete(Jam_Model $model)
     {
         Jam::update($model)
-            ->where('path', 'LIKE', $model->path.'%')
+            ->where('path', 'LIKE', $model->children_path().'%')
             ->value(
                 'path',
                 DB::expr(
