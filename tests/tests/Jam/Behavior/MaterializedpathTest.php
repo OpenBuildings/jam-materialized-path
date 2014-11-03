@@ -9,6 +9,22 @@
  */
 class Jam_Behavior_MaterializedpathTest extends Testcase
 {
+    /**
+     * @covers ::initialize
+     */
+    public function test_initialize()
+    {
+        $category = Jam::meta('category2');
+
+        $this->assertArrayHasKey('parent', $category->associations());
+        $this->assertInstanceOf('Jam_Association_Materializedpath_Belongsto', $category->association('parent'));
+
+        $this->assertArrayHasKey('children', $category->associations());
+        $this->assertInstanceOf('Jam_Association_Materializedpath_Hasmany', $category->association('children'));
+
+        $this->assertArrayHasKey('path', $category->fields());
+    }
+
     public function data_children_path()
     {
         return array(
@@ -27,6 +43,26 @@ class Jam_Behavior_MaterializedpathTest extends Testcase
         $category = Jam::build('category', $attributes);
 
         $this->assertEquals($expected, $category->children_path());
+    }
+
+    public function data_depth()
+    {
+        return array(
+            array(array('id' => 1, 'path' => ''), 0),
+            array(array('id' => 10, 'path' => '3'), 1),
+            array(array('id' => 23, 'path' => '3/12'), 2),
+        );
+    }
+
+    /**
+     * @covers ::model_call_depth
+     * @dataProvider data_depth
+     */
+    public function test_depth($attributes, $expected)
+    {
+        $category = Jam::build('category', $attributes);
+
+        $this->assertEquals($expected, $category->depth());
     }
 
     public function data_path_ids()
@@ -163,5 +199,25 @@ class Jam_Behavior_MaterializedpathTest extends Testcase
 
         $this->assertEquals("SELECT `categories`.* FROM `categories`", (string) $category->ansestors());
         $this->assertCount(0, $category->ansestors());
+    }
+
+    /**
+     * @covers ::builder_call_update_children
+     */
+    public function test_update_children()
+    {
+        $category = Jam::update('category')
+            ->where('id', '=', 8)
+            ->update_children('1/3', '1/3/6');
+
+        $expected = "UPDATE `categories` SET `path` = TRIM(BOTH '/' FROM REPLACE(path, '1/3', '1/3/6')) WHERE `categories`.`id` = 8";
+
+        $this->assertEquals($expected, (string) $category);
+
+        $this->setExpectedException('InvalidArgumentException', 'Can only be used on "update" queries');
+
+        $category = Jam::all('category')
+            ->where('id', '=', 8)
+            ->update_children('1/3', '1/3/6');
     }
 }

@@ -9,6 +9,10 @@
  */
 class IntegrationTest extends Testcase
 {
+    /**
+     * @covers Kohana_Jam_Association_Materializedpath_Hasmany::save
+     * @covers Kohana_Jam_Association_Materializedpath_Hasmany::model_after_delete
+     */
     public function test_shallow()
     {
         $nine = Jam::create('category', array('name' => 'nine'));
@@ -35,6 +39,10 @@ class IntegrationTest extends Testcase
         $this->assertEquals(array(2, 3, 4, 5, 6, 8), $one->decendents()->ids());
     }
 
+    /**
+     * @covers Kohana_Jam_Association_Materializedpath_Hasmany::save
+     * @covers Kohana_Jam_Association_Materializedpath_Hasmany::add_items_query
+     */
     public function test_add_child()
     {
         $two = Jam::find('category', 2);
@@ -60,6 +68,10 @@ class IntegrationTest extends Testcase
         $this->assertEquals($expected, $result);
     }
 
+    /**
+     * @covers Kohana_Jam_Association_Materializedpath_Hasmany::save
+     * @covers Kohana_Jam_Association_Materializedpath_Hasmany::remove_items_query
+     */
     public function test_remove_child()
     {
         $one = Jam::find('category', 1);
@@ -80,6 +92,34 @@ class IntegrationTest extends Testcase
             6 => '3',
             7 => '3/6',
             8 => '3/6',
+        );
+
+        $this->assertEquals($expected, $result);
+    }
+
+    /**
+     * @covers Kohana_Jam_Association_Materializedpath_Belongsto::model_after_save
+     */
+    public function test_belongsto()
+    {
+        $two = Jam::find('category', 2);
+        $seven = Jam::find('category', 7);
+
+        $two->parent = $seven;
+
+        $two->save();
+
+        $result = Jam::all('category')->as_array('id', 'path');
+
+        $expected = array(
+            1 => NULL,
+            2 => '1/3/6/7',
+            3 => '1',
+            4 => '1/3/6/7/2',
+            5 => '1/3/6/7/2',
+            6 => '1/3',
+            7 => '1/3/6',
+            8 => '1/3/6',
         );
 
         $this->assertEquals($expected, $result);
