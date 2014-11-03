@@ -1,5 +1,5 @@
 {
-    "name": "OpenBuildings/jam-materialized-path",
+    "name": "openbuildings/jam-materialized-path",
     "type": "kohana-module",
     "description": "Materialized path nesting for Jam ORM models",
     "license": "BSD-3-Clause",
