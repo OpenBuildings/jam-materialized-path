@@ -35,3 +35,5 @@ Kohana::$config
             'charset'      => 'utf8',
             'caching'      => FALSE,
         ));
+
+error_reporting(E_ALL ^ E_DEPRECATED);
