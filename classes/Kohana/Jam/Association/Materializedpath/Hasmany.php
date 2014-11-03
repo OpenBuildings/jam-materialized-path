@@ -39,16 +39,8 @@ class Kohana_Jam_Association_Materializedpath_Hasmany extends Kohana_Jam_Associa
 
                 Jam::update($model)
                     ->where('path', 'LIKE', $old_path.'%')
-                    ->value(
-                        'path',
-                        DB::expr(
-                            'TRIM(BOTH "/" FROM REPLACE(path, :old_path, :new_path))',
-                            array(
-                                ':old_path' => $old_path,
-                                ':new_path' => $new_path,
-                            )
-                        )
-                    )->execute();
+                    ->update_children($old_path, $new_path)
+                    ->execute();
             }
         }
 
@@ -62,16 +54,8 @@ class Kohana_Jam_Association_Materializedpath_Hasmany extends Kohana_Jam_Associa
 
                 Jam::update($model)
                     ->where('path', 'LIKE', $old_path.'%')
-                    ->value(
-                        'path',
-                        DB::expr(
-                            'TRIM(BOTH "/" FROM REPLACE(path, :old_path, :new_path))',
-                            array(
-                                ':old_path' => $old_path,
-                                ':new_path' => $new_path,
-                            )
-                        )
-                    )->execute();
+                    ->update_children($old_path, $new_path)
+                    ->execute();
             }
         }
     }
@@ -82,18 +66,11 @@ class Kohana_Jam_Association_Materializedpath_Hasmany extends Kohana_Jam_Associa
      */
     public function model_after_delete(Jam_Model $model)
     {
+        $path = $model->children_path();
+
         Jam::update($model)
-            ->where('path', 'LIKE', $model->children_path().'%')
-            ->value(
-                'path',
-                DB::expr(
-                    'TRIM(BOTH "/" FROM REPLACE(path, :old_path, :new_path))',
-                    array(
-                        ':old_path' => $model->path,
-                        ':new_path' => '',
-                    )
-                )
-            )
+            ->where('path', 'LIKE', $path.'%')
+            ->update_children($path, '')
             ->execute();
     }
 }

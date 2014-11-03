@@ -45,13 +45,6 @@ class Kohana_Jam_Behavior_Materializedpath extends Jam_Behavior
         $data->return = empty($model->parent_id);
     }
 
-    public function model_call_decendents(Jam_Model $model, Jam_event_data $data)
-    {
-        $path = $model->children_path();
-
-        $data->return = Jam::all($model)->where('path', 'LIKE', "{$path}%");
-    }
-
     public function model_call_is_decendent_of(Jam_Model $model, Jam_event_data $data, Jam_Model $ancestor)
     {
         $data->return = in_array($ancestor->id(), $model->path_ids());
@@ -65,6 +58,33 @@ class Kohana_Jam_Behavior_Materializedpath extends Jam_Behavior
     public function model_call_depth(Jam_Model $model, Jam_event_data $data)
     {
         $data->return = count($model->path_ids());
+    }
+
+    public function builder_call_update_children(Database_Query $builder, Jam_Event_Data $data, $old_path, $new_path)
+    {
+        if (FALSE === ($builder instanceof Jam_Query_Builder_Update))
+        {
+            throw new InvalidArgumentException('Can only be used on "update" queries');
+        }
+
+        $builder
+            ->value(
+                'path',
+                DB::expr(
+                    "TRIM(BOTH '/' FROM REPLACE(path, :old_path, :new_path))",
+                    array(
+                        ':old_path' => $old_path,
+                        ':new_path' => $new_path,
+                    )
+                )
+            );
+    }
+
+    public function model_call_decendents(Jam_Model $model, Jam_event_data $data)
+    {
+        $path = $model->children_path();
+
+        $data->return = Jam::all($model)->where('path', 'LIKE', "{$path}%");
     }
 
     public function model_call_ansestors(Jam_Model $model, Jam_event_data $data)
